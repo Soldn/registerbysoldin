@@ -1,0 +1,13 @@
+
+# SoldinRegister Config
+login-timeout: 60
+max-accounts-per-ip: 3
+database:
+  type: sqlite # sqlite или mysql
+  mysql:
+    host: localhost
+    port: 3306
+    database: soldinregister
+    user: root
+    password: pass
+qr-service: "https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl="

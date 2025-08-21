@@ -1,0 +1,15 @@
+
+name: SoldinRegister
+main: com.soldinregister.SoldinRegister
+version: 3.0
+api-version: 1.16
+commands:
+  register:
+    description: Зарегистрироваться
+  login:
+    description: Войти
+  2fa:
+    description: Управление 2FA
+  soldinregister:
+    description: Админ команды
+    permission: soldinregister.admin
