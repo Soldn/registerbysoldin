@@ -1,9 +1,0 @@
-name: SoldinRegister
-main: com.soldin.register.SoldinRegister
-version: 5.0.1
-api-version: 1.16
-commands:
-  register:
-    description: Register command
-  login:
-    description: Login command
