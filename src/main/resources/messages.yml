@@ -1,7 +1,0 @@
-
-prefix: "&6[SoldinRegister] "
-register-prompt: "&eВведите &a/register <пароль>"
-login-prompt: "&eВведите &a/login <пароль>"
-login-2fa-prompt: "&eВведите &a/login <пароль> <код2FA>"
-kick-timeout: "&cВремя авторизации истекло!"
-kick-attempts: "&cСлишком много попыток!"
