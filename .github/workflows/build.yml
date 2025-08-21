@@ -2,33 +2,30 @@ name: Build SoldinRegister
 
 on:
   push:
+    branches: [ "main" ]
   pull_request:
+    branches: [ "main" ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Setup JDK 17
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
           java-version: '17'
+          distribution: 'temurin'
+          cache: maven
 
       - name: Build with Maven
-        run: mvn -B -q package
-        continue-on-error: true
+        run: mvn -B clean package --file pom.xml
 
-      - name: Build with Gradle
-        run: |
-          if [ -f gradlew ]; then chmod +x gradlew && ./gradlew build -x test; else gradle build -x test; fi
-        continue-on-error: true
-
-      - name: Upload artifacts
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SoldinRegister-builds
-          path: |
-            target/*.jar
-            build/libs/*.jar
+          name: SoldinRegister
+          path: target/SoldinRegister-*.jar
