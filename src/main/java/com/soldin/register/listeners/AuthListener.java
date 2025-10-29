@@ -66,7 +66,9 @@ public class AuthListener implements Listener {
                         .replace("{time}", String.valueOf(left));
                 try {
                     // 1.17+: Player#sendActionBar
-                    p.sendActionBar(msg);
+                    p.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+        new net.md_5.bungee.api.chat.TextComponent(msg));
+
                 } catch (NoSuchMethodError err) {
                     // Fallback для старых версий (не компилируем здесь, просто совместимость на будущее)
                     p.sendMessage(msg);
