@@ -46,6 +46,6 @@ public class AuthCommands implements CommandExecutor {
         }
 
         // --- Вызов стандартной логики авторизации/регистрации ---
-        return plugin.getAuthManager().handleCommand(player, name, args);
+        return plugin.handleAuthCommand(player, name, args);
     }
 }
