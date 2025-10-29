@@ -61,11 +61,19 @@ public class AuthCommands implements CommandExecutor {
                 try {
                     String salt = generateSalt();
                     String hash = hashPassword(password, salt);
-                    UserRecord record = new UserRecord(uuid, player.getName(), hash, salt, 10000,
+                    UserRecord record = new UserRecord(
+                            uuid,
+                            player.getName(),
+                            hash,
+                            salt,
+                            10000,
                             player.getAddress().getAddress().getHostAddress(),
-                            System.currentTimeMillis(), 0L, null);
-                    plugin.storage().createUser(record);
-                    plugin.setAuthenticated(uuid, true);
+                            System.currentTimeMillis(),
+                            0L,
+                            null
+                    );
+                    plugin.storage().save(record);
+                    plugin.setAuthenticated(uuid);
                     player.sendMessage(ChatColor.GREEN + "Регистрация успешна! Теперь вы вошли.");
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -88,7 +96,7 @@ public class AuthCommands implements CommandExecutor {
                         return true;
                     }
 
-                    plugin.setAuthenticated(uuid, true);
+                    plugin.setAuthenticated(uuid);
                     player.sendMessage(ChatColor.GREEN + "Успешный вход!");
                 } catch (Exception e) {
                     e.printStackTrace();
