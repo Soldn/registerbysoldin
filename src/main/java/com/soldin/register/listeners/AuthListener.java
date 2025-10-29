@@ -8,53 +8,72 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.*;
 
+import java.util.List;
+import java.util.UUID;
+import java.util.HashMap;
+import java.util.Map;
+
 public class AuthListener implements Listener {
 
-    private final java.util.Map<java.util.UUID, Integer> reminderTasks = new java.util.HashMap<>();
-
+    private final Map<UUID, Integer> reminderTasks = new HashMap<>();
+    private final Map<UUID, Integer> barTasks = new HashMap<>();
     private final SoldinRegister plugin;
-    public AuthListener(SoldinRegister plugin) { this.plugin = plugin; }
 
-    private boolean shouldBlock(Player p) { return !plugin.isAuthenticated(p.getUniqueId()); }
+    public AuthListener(SoldinRegister plugin) {
+        this.plugin = plugin;
+    }
+
+    private boolean shouldBlock(Player p) {
+        return !plugin.isAuthenticated(p.getUniqueId());
+    }
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
         plugin.revokeAuthenticated(p.getUniqueId());
+
         long timeoutMs = plugin.getConfig().getLong("timeouts.auth_seconds", 60) * 1000L;
         long deadline = System.currentTimeMillis() + timeoutMs;
         plugin.setAuthDeadline(p.getUniqueId(), deadline);
+
+        // Отправляем сообщение
         p.sendMessage(ChatColor.translateAlternateColorCodes('&',
                 plugin.getConfig().getString("messages.on_join",
                         "&eВведи &a/register <пароль> &eили &a/login <пароль> [код2FA]")));
 
+        // Периодическое напоминание
         if (plugin.getConfig().getBoolean("reminder.enabled", true)) {
             int intervalTicks = plugin.getConfig().getInt("reminder.interval_seconds", 2) * 20;
             int taskId = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
                 if (!plugin.isAuthenticated(p.getUniqueId()) && p.isOnline()) {
                     if (plugin.storage().getByUUID(p.getUniqueId()) == null) {
-                        p.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                                "&cЗарегистрируйтесь: /reg <пароль>"));
+                        p.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cЗарегистрируйтесь: /reg <пароль>"));
                     } else {
-                        if (plugin.getConfig().getBoolean("enable-2fa", true)
-                                && plugin.storage().getByUUID(p.getUniqueId()).twoFASecret != null) {
-                            p.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                                    "&eВойдите: /login <пароль> <код 2FA>"));
-                        } else {
-                            p.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                                    "&eВойдите: /login <пароль>"));
-                        }
+                        p.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eВойдите: /login <пароль>"));
                     }
                 }
             }, 0L, intervalTicks).getTaskId();
             reminderTasks.put(p.getUniqueId(), taskId);
         }
 
+        // ⏱ Отображение времени над хп/едой (action bar)
+        int barTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            if (!plugin.isAuthenticated(p.getUniqueId()) && p.isOnline()) {
+                long left = (plugin.getAuthDeadline(p.getUniqueId()) - System.currentTimeMillis()) / 1000L;
+                if (left < 0) left = 0;
+                String msg = ChatColor.translateAlternateColorCodes('&',
+                        plugin.getConfig().getString("messages.auth_timer", "&eОсталось &c{time}s для авторизации"))
+                        .replace("{time}", String.valueOf(left));
+                p.sendActionBar(msg);
+            }
+        }, 0L, 20L).getTaskId();
+        barTasks.put(p.getUniqueId(), barTask);
+
+        // Кик после таймаута
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (!plugin.isAuthenticated(p.getUniqueId()) && p.isOnline()) {
                 p.kickPlayer(ChatColor.translateAlternateColorCodes('&',
-                        plugin.getConfig().getString("messages.auth_time_expired",
-                                "&cВремя на авторизацию истекло.")));
+                        plugin.getConfig().getString("messages.auth_time_expired", "&cВремя на авторизацию истекло.")));
             }
         }, timeoutMs / 50L);
     }
@@ -65,9 +84,9 @@ public class AuthListener implements Listener {
         plugin.clearAuthDeadline(e.getPlayer().getUniqueId());
         plugin.resetAttempts(e.getPlayer().getUniqueId());
 
-        if (reminderTasks.containsKey(e.getPlayer().getUniqueId())) {
-            Bukkit.getScheduler().cancelTask(reminderTasks.remove(e.getPlayer().getUniqueId()));
-        }
+        UUID u = e.getPlayer().getUniqueId();
+        if (reminderTasks.containsKey(u)) Bukkit.getScheduler().cancelTask(reminderTasks.remove(u));
+        if (barTasks.containsKey(u)) Bukkit.getScheduler().cancelTask(barTasks.remove(u));
     }
 
     @EventHandler
@@ -80,15 +99,16 @@ public class AuthListener implements Listener {
         }
     }
 
-    // 🔒 Обновлённый метод — теперь блокирует /server и другие обходные команды
+    // 🔒 Блокировка всех команд, кроме разрешённых
     @EventHandler
     public void onCmd(PlayerCommandPreprocessEvent e) {
         if (!plugin.getConfig().getBoolean("locks.block_commands", true)) return;
         if (!shouldBlock(e.getPlayer())) return;
 
         String msg = e.getMessage().toLowerCase().trim();
+        List<String> blocked = plugin.getConfig().getStringList("locks.blocked_commands");
 
-        // Разрешённые команды до авторизации
+        // Разрешённые команды
         if (msg.startsWith("/login") || msg.startsWith("/l ") || msg.equals("/l")
                 || msg.startsWith("/register") || msg.startsWith("/reg") || msg.equals("/reg")
                 || msg.startsWith("/soldinregister") || msg.startsWith("/changepass")
@@ -96,20 +116,17 @@ public class AuthListener implements Listener {
             return;
         }
 
-        // Блокируем обходные команды
-        if (msg.startsWith("/server") || msg.startsWith("/s ")
-                || msg.startsWith("/bungee") || msg.startsWith("/hub")
-                || msg.startsWith("/proxy") || msg.startsWith("/connect")
-                || msg.startsWith("/travel") || msg.startsWith("/goto")
-                || msg.contains(":server")) {
-            e.setCancelled(true);
-            e.getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                    plugin.getConfig().getString("messages.must_login",
-                            "&cСначала войди: /login <пароль>")));
-            return;
+        // Если команда входит в список блокируемых из config.yml — запрещаем
+        for (String c : blocked) {
+            if (msg.startsWith("/" + c.toLowerCase())) {
+                e.setCancelled(true);
+                e.getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                        plugin.getConfig().getString("messages.must_login", "&cСначала войди: /login <пароль>")));
+                return;
+            }
         }
 
-        // Всё остальное тоже блокируется
+        // Блокируем всё остальное
         e.setCancelled(true);
         e.getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&',
                 plugin.getConfig().getString("messages.must_login",
