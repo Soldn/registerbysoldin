@@ -1,6 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.soldin</groupId>
@@ -8,6 +11,11 @@
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
+    <name>SoldinRegister</name>
+
+    <!-- ==================== -->
+    <!-- Java / Compiler -->
+    <!-- ==================== -->
     <properties>
         <java.version>17</java.version>
         <maven.compiler.source>17</maven.compiler.source>
@@ -15,14 +23,26 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <!-- ==================== -->
+    <!-- Repositories -->
+    <!-- ==================== -->
     <repositories>
         <repository>
             <id>spigot-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
+        <repository>
+            <id>sonatype</id>
+            <url>https://oss.sonatype.org/content/groups/public/</url>
+        </repository>
     </repositories>
 
+    <!-- ==================== -->
+    <!-- Dependencies -->
+    <!-- ==================== -->
     <dependencies>
+
+        <!-- Spigot API (1.16.5 → latest compatible) -->
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
@@ -30,21 +50,36 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Discord JDA (Java 17 compatible) -->
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
             <version>5.0.0-beta.24</version>
         </dependency>
 
+        <!-- Telegram (pengrad) -->
         <dependency>
-            <groupId>org.telegram</groupId>
-            <artifactId>telegrambots</artifactId>
-            <version>6.9.7.1</version>
+            <groupId>com.github.pengrad</groupId>
+            <artifactId>java-telegram-bot-api</artifactId>
+            <version>7.7.0</version>
         </dependency>
+
+        <!-- Optional: JSON (если используешь) -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
+        </dependency>
+
     </dependencies>
 
+    <!-- ==================== -->
+    <!-- Build -->
+    <!-- ==================== -->
     <build>
         <plugins>
+
+            <!-- Maven Compiler -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -54,6 +89,8 @@
                     <target>17</target>
                 </configuration>
             </plugin>
+
         </plugins>
     </build>
+
 </project>
