@@ -23,19 +23,19 @@ public class AuthListener implements Listener {
         long timeoutMs = plugin.getConfig().getLong("timeouts.auth_seconds", 60) * 1000L;
         long deadline = System.currentTimeMillis() + timeoutMs;
         plugin.setAuthDeadline(p.getUniqueId(), deadline);
-        p.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.on_join", "&eВведи &a/register <пароль> &eили &a/login <пароль> [код2FA]")));
+        p.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.on_join", "&b♲ &fВведи &a/register &f<пароль> &fили &a/login &f<пароль>")));
         
         if (plugin.getConfig().getBoolean("reminder.enabled", true)) {
             int intervalTicks = plugin.getConfig().getInt("reminder.interval_seconds", 2) * 20;
             int taskId = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
                 if (!plugin.isAuthenticated(p.getUniqueId()) && p.isOnline()) {
                     if (plugin.storage().getByUUID(p.getUniqueId()) == null) {
-                        p.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cЗарегистрируйтесь: /reg <пароль>"));
+                        p.sendMessage(ChatColor.translateAlternateColorCodes('&', "&b♲ &fЗарегистрируйтесь: /reg <пароль>"));
                     } else {
                         if (plugin.getConfig().getBoolean("enable-2fa", true) && plugin.storage().getByUUID(p.getUniqueId()).twoFASecret != null) {
-                            p.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eВойдите: /login <пароль> <код 2FA>"));
+                            p.sendMessage(ChatColor.translateAlternateColorCodes('&', "&b♲ &fВойдите: /login <пароль> <код 2FA>"));
                         } else {
-                            p.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eВойдите: /login <пароль>"));
+                            p.sendMessage(ChatColor.translateAlternateColorCodes('&', "&b♲ &fВойдите: /login <пароль>"));
                         }
                     }
                 }
@@ -45,7 +45,7 @@ public class AuthListener implements Listener {
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (!plugin.isAuthenticated(p.getUniqueId()) && p.isOnline()) {
-                p.kickPlayer(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.auth_time_expired", "&cВремя на авторизацию истекло.")));
+                p.kickPlayer(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.auth_time_expired", "&b♲ &fВремя на авторизацию истекло.")));
             }
         }, timeoutMs / 50L);
     }
@@ -64,7 +64,7 @@ public class AuthListener implements Listener {
     @EventHandler public void onChat(AsyncPlayerChatEvent e) {
         if (plugin.getConfig().getBoolean("locks.block_chat", true) && shouldBlock(e.getPlayer())) {
             e.setCancelled(true);
-            e.getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.must_login", "&cСначала войди: /login <пароль>")));
+            e.getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.must_login", "&b♲ &fСначала войди: /login <пароль>")));
         }
     }
 
@@ -74,7 +74,7 @@ public class AuthListener implements Listener {
         String msg = e.getMessage().toLowerCase();
         if (msg.startsWith("/login") || msg.startsWith("/l ") || msg.equals("/l") || msg.startsWith("/register") || msg.startsWith("/reg") || msg.startsWith("/soldinregister")) return;
         e.setCancelled(true);
-        e.getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.must_login", "&cСначала войди: /login <пароль>")));
+        e.getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.must_login", "&b♲ &fСначала войди: /login <пароль>")));
     }
 
     @EventHandler public void onMove(PlayerMoveEvent e) {
