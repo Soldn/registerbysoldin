@@ -1,0 +1,28 @@
+name: SoldinRegister
+main: com.soldin.register.SoldinRegister
+version: 1.2.0
+api-version: 1.16
+authors: ["Soldi_n .jar"]
+commands:
+  register:
+    description: Регистрация
+    usage: /register <пароль>
+  reg:
+    description: Регистрация (алиас)
+    usage: /reg <пароль>
+  login:
+    description: Вход
+    usage: /login <пароль> [код2FA]
+  l:
+    description: Вход (алиас)
+    usage: /l <пароль> [код2FA]
+  changepass:
+    description: Смена пароля
+    usage: /changepass <старый> <новый>
+  soldinregister:
+    description: Админ и 2FA
+    usage: /soldinregister reload | adminchangepass | admindelete | 2fa | 2faurl
+permissions:
+  soldinregister.admin:
+    default: op
+    description: Админские действия
