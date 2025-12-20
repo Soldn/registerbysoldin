@@ -129,7 +129,7 @@ public class SoldinRegister extends JavaPlugin {
         // Требуется подтверждение: запомним IP и отправим запрос в Telegram.
         pendingTelegramIp.put(user.uuid, ip);
         telegramBot.sendLoginRequest(user.uuid, player.getName(), ip);
-        player.sendMessage(ChatColor.RED + "Подтвердите вход через Telegram-бота, затем дождитесь сообщения о входе.");
+        player.sendMessage(ChatColor.RED + "♲ Подтвердите вход через Telegram-бота, затем дождитесь сообщения о входе.");
         return true;
     }
 
@@ -150,7 +150,7 @@ public class SoldinRegister extends JavaPlugin {
         Player p = getServer().getPlayer(uuid);
         if (p != null && p.isOnline() && !isAuthenticated(uuid)) {
             setAuthenticated(uuid);
-            p.sendMessage(ChatColor.GREEN + "Вход подтверждён через Telegram!");
+            p.sendMessage(ChatColor.GREEN + "♲ Вход подтверждён через Telegram!");
         }
     }
 
@@ -159,7 +159,7 @@ public class SoldinRegister extends JavaPlugin {
         pendingTelegramIp.remove(uuid);
         Player p = getServer().getPlayer(uuid);
         if (p != null && p.isOnline() && !isAuthenticated(uuid)) {
-            p.kickPlayer("Вход отклонён через Telegram.");
+            p.kickPlayer("♲ Вход отклонён через Telegram.");
         }
     }
 
@@ -168,7 +168,7 @@ public class SoldinRegister extends JavaPlugin {
         if (storage == null) return;
         if (storage.getTgLinkByUUID(player.getUniqueId()) != null) return; // уже привязан, не спамим
         String raw = getConfig().getString("messages.protect_account",
-                "&eЗащитите свой аккаунт! &7Привяжите Telegram: &b/2fa tg");
+                "&b♲ &fЗащитите свой аккаунт! &7Привяжите Telegram: &b/tg");
         player.sendMessage(ChatColor.translateAlternateColorCodes('&', raw));
     }
 
