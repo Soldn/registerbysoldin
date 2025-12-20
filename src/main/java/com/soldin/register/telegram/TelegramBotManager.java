@@ -104,11 +104,6 @@ public class TelegramBotManager {
                         "- /accs или /list — Все привязанные аккаунты\n" +
                         "- /unlink [НИК] — Отвязать аккаунт\n" +
                         "- /kick [НИК] — Кикнуть игрока";
-                        "- /code [КОД] — Привязать аккаунт к текущей странице\n" +
-                        "- /list — Список привязанных аккаунтов\n" +
-                        "- /changepassword [НИК] — Сбросить пароль от аккаунта\n" +
-                        "- /kick [НИК] — Кикнуть аккаунт с сервера\n" +
-                        "- /unlink [НИК] — Отвязать аккаунт";
             }
 
             bot.execute(new SendMessage(tgId, help));
@@ -118,8 +113,8 @@ public class TelegramBotManager {
         if (text.equals("/2fa")) {
             bot.execute(new SendMessage(tgId,
                     "[♲] Для того, чтобы привязать игровой аккаунт, выполните следующие действия:\n" +
-                    "1) В лобби: /tg\n" +
-                    "2) Здесь: /code <код>"));
+                            "1) В лобби: /tg\n" +
+                            "2) Здесь: /code <код>"));
             return;
         }
 
@@ -133,29 +128,34 @@ public class TelegramBotManager {
 
             TgLink existing = storage.getTgLinkByTgId(tgId);
             if (existing != null) {
-                bot.execute(new SendMessage(tgId,
-                        cfg.getString("messages.already_linked", "[♲] Этот Telegram уже привязан к аккаунту.")));
+                bot.execute(new SendMessage(
+                        tgId,
+                        "[♲] Аккаунт уже был привязан к текущей странице!\nВведите /help для того, чтобы увидеть список команд"
+                ));
                 return;
             }
 
             TgLink link = new TgLink(uuid, tgId, null, 0L);
             storage.saveOrUpdateTgLink(link);
 
-            bot.execute(new SendMessage(tgId,
-                    cfg.getString("messages.already_linked", "[♲] Аккаунт Soldi_ns был привязан к Текущей странице!\nВведите /help для того, чтобы увидеть список команд")));
+            UserRecord user = storage.getByUUID(uuid);
+            String name = (user != null ? user.name : uuid.toString());
+
+            bot.execute(new SendMessage(
+                    tgId,
+                    "[♲] Аккаунт " + name + " был привязан к Текущей странице!\nВведите /help для того, чтобы увидеть список команд"
+            ));
             return;
         }
 
         if (text.equals("/unlink")) {
             TgLink link = storage.getTgLinkByTgId(tgId);
             if (link == null) {
-                bot.execute(new SendMessage(tgId,
-                        cfg.getString("messages.no_link", "[♲] Нет привязанного аккаунта.")));
+                bot.execute(new SendMessage(tgId, "[♲] Нет привязанного аккаунта."));
                 return;
             }
             storage.deleteTgLinkByTgId(tgId);
-            bot.execute(new SendMessage(tgId,
-                    cfg.getString("messages.unlink_ok", "[♲] Аккаунт отвязан.")));
+            bot.execute(new SendMessage(tgId, "[♲] Аккаунт отвязан."));
             return;
         }
 
@@ -174,16 +174,14 @@ public class TelegramBotManager {
             TgLink link = storage.getTgLinkByUUID(uuid);
             if (link != null && link.tgId == tgId) {
                 plugin.approveTelegramLogin(uuid);
-                bot.execute(new SendMessage(tgId,
-                        cfg.getString("messages.login_approved", "[♲] Вход подтверждён.")));
+                bot.execute(new SendMessage(tgId, "[♲] Вход подтверждён."));
             }
         } else if (data.startsWith("deny:")) {
             UUID uuid = UUID.fromString(data.substring(5));
             TgLink link = storage.getTgLinkByUUID(uuid);
             if (link != null && link.tgId == tgId) {
                 plugin.denyTelegramLogin(uuid);
-                bot.execute(new SendMessage(tgId,
-                        cfg.getString("messages.login_denied", "[♲] Вход отклонён.")));
+                bot.execute(new SendMessage(tgId, "[♲] Вход отклонён."));
             }
         }
     }
@@ -193,10 +191,7 @@ public class TelegramBotManager {
         TgLink link = storage.getTgLinkByUUID(uuid);
         if (link == null) return;
 
-        String text = cfg.getString("messages.login_request",
-                "⚠️ Попытка входа\nНик: %player%\nIP: %ip%")
-                .replace("%player%", playerName)
-                .replace("%ip%", ip);
+        String text = "⚠️ Попытка входа\nНик: " + playerName + "\nIP: " + ip;
 
         InlineKeyboardMarkup kb = new InlineKeyboardMarkup(
                 new InlineKeyboardButton("Разрешить").callbackData("allow:" + uuid),
