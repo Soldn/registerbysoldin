@@ -148,7 +148,7 @@ case "changepass":
                 UserRecord u = plugin.storage().getByUUID(p.getUniqueId());
                 if (u == null) { p.sendMessage("Сначала зарегистрируйся."); return true; }
                 if (args.length < 2) {
-                    p.sendMessage(ChatColor.YELLOW + "/soldinregister 2fa <tg|enable|confirm|disable|unbind|reset> [код|ник]");
+                    p.sendMessage(ChatColor.YELLOW + "/soldinregister 2fa <tg> ");
                     return true;
                 }
 
