@@ -16,9 +16,12 @@ public class AuthCommands implements CommandExecutor {
     private final SoldinRegister plugin;
     public AuthCommands(SoldinRegister plugin) { this.plugin = plugin; }
 
-    private String msg(String path) { return ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages."+path, path)); }
+    private String msg(String path) { 
+        return ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages."+path, path)); 
+    }
 
-    @Override public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+    @Override 
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         String name = cmd.getName().toLowerCase();
         if (name.equals("soldinregister")) {
             return handleAdminRoot(sender, args);
@@ -34,12 +37,12 @@ public class AuthCommands implements CommandExecutor {
                 if (args.length < 1) { p.sendMessage(msg("usage_register")); return true; }
                 String pass = args[0];
                 if (pass.length() < plugin.getConfig().getInt("security.min_password_length", 5)) { p.sendMessage(msg("password_too_short")); return true; }
-                String ip = p.getAddress() != null ? p.getAddress().getAddress().getHostAddress() : "unknown";
-                int count = plugin.storage().countByIP(ip);
+                String regIp = p.getAddress() != null ? p.getAddress().getAddress().getHostAddress() : "unknown";
+                int count = plugin.storage().countByIP(regIp);
                 int max = plugin.getConfig().getInt("limits.max_accounts_per_ip", 3);
                 if (max > 0 && count >= max) { p.sendMessage(msg("ip_limit_reached")); return true; }
                 PasswordUtil.HashPack hp = PasswordUtil.hashPassword(pass);
-                UserRecord r = new UserRecord(uuid, p.getName(), hp.hash, hp.salt, hp.iterations, ip, System.currentTimeMillis(), 0L, null);
+                UserRecord r = new UserRecord(uuid, p.getName(), hp.hash, hp.salt, hp.iterations, regIp, System.currentTimeMillis(), 0L, null);
                 plugin.storage().create(r);
                 plugin.setAuthenticated(uuid);
                 p.sendMessage(msg("registered_ok"));
@@ -79,20 +82,16 @@ public class AuthCommands implements CommandExecutor {
                         }
                     }
                 }
-                String ip = p.getAddress() != null ? p.getAddress().getAddress().getHostAddress() : "unknown";
-                // Telegram 2FA: если привязан Telegram, проверяем IP/тайминг
-                if (plugin.handleTelegramLogin(p, u, ip)) {
-                    // Требуется подтверждение через Telegram, но мы НЕ кикаем игрока, просто ждём.
-                    return true;
-                }
+                String loginIp = p.getAddress() != null ? p.getAddress().getAddress().getHostAddress() : "unknown";
+                if (plugin.handleTelegramLogin(p, u, loginIp)) { return true; }
                 u.lastLogin = System.currentTimeMillis();
-                u.ip = ip;
+                u.ip = loginIp;
                 plugin.storage().update(u);
                 plugin.setAuthenticated(uuid);
                 p.sendMessage(msg("login_ok"));
                 plugin.sendProtectAccountMessage(p);
                 return true;
-case "changepass":
+            case "changepass":
                 UserRecord cu = plugin.storage().getByUUID(uuid);
                 if (cu == null) { p.sendMessage(msg("not_registered")); return true; }
                 if (args.length < 2) { p.sendMessage(msg("usage_changepass")); return true; }
@@ -141,90 +140,6 @@ case "changepass":
                 if (du == null) { sender.sendMessage(ChatColor.RED+"Игрок не найден."); return true; }
                 plugin.storage().delete(du.uuid);
                 sender.sendMessage(ChatColor.GREEN+"Аккаунт удалён: "+du.name);
-                return true;
-            case "2fa":
-                if (!(sender instanceof Player)) { sender.sendMessage("Только игрок."); return true; }
-                Player p = (Player) sender;
-                UserRecord u = plugin.storage().getByUUID(p.getUniqueId());
-                if (u == null) { p.sendMessage("Сначала зарегистрируйся."); return true; }
-                if (args.length < 2) {
-                    p.sendMessage(ChatColor.YELLOW + "/soldinregister 2fa <tg|enable|confirm|disable|unbind|reset> [код|ник]");
-                    return true;
-                }
-
-                // Привязка через Telegram: /soldinregister 2fa tg
-                if (args[1].equalsIgnoreCase("tg")) {
-                    if (plugin.getTelegramBot() == null || !plugin.getTelegramBot().isEnabled()) {
-                        p.sendMessage(ChatColor.RED + "Telegram-бот 2FA не настроен. Обратитесь к администрации.");
-                        return true;
-                    }
-                    String code = com.soldin.register.telegram.LinkCodeManager.generate(p.getUniqueId());
-                    p.sendMessage(ChatColor.AQUA + "Код для привязки Telegram: " + ChatColor.YELLOW + code);
-                    p.sendMessage(ChatColor.GRAY + "Отправь этот код боту в Telegram командой: /code " + code);
-                    return true;
-                }
-
-                switch (args[1].toLowerCase()) {
-                    case "enable":
-                        if (u.twoFASecret != null) { p.sendMessage(ChatColor.RED+"2FA уже включена."); return true; }
-                        String secret = com.soldin.register.util.TOTPUtil.generateSecret();
-                        String issuer = plugin.getConfig().getString("twofa.issuer", "SoldinServer");
-                        String account = p.getName();
-                        String otpauth = com.soldin.register.util.TOTPUtil.buildOtpAuthURL(issuer, account, secret);
-                        plugin.getConfig().set("runtime.tmp2fa."+p.getUniqueId(), secret);
-                        plugin.saveConfig();
-                        p.sendMessage(ChatColor.GREEN+"Секрет сгенерирован. Добавь в Google Authenticator по ссылке:");
-                        p.sendMessage(ChatColor.AQUA+otpauth);
-                        p.sendMessage(ChatColor.YELLOW+"Теперь введи: /soldinregister 2fa confirm <код>");
-                        return true;
-                    case "confirm":
-                        if (args.length < 3) { p.sendMessage(ChatColor.YELLOW+"/soldinregister 2fa confirm <код>"); return true; }
-                        String pending = plugin.getConfig().getString("runtime.tmp2fa."+p.getUniqueId());
-                        if (pending == null) { p.sendMessage(ChatColor.RED+"Секрет не сгенерирован. /soldinregister 2fa enable"); return true; }
-                        if (!com.soldin.register.util.TOTPUtil.verifyCode(pending, args[2], plugin.getConfig().getInt("twofa.totp_window", 1))) {
-                            p.sendMessage(ChatColor.RED+"Неверный код.");
-                            return true;
-                        }
-                        u.twoFASecret = pending; plugin.storage().update(u);
-                        plugin.getConfig().set("runtime.tmp2fa."+p.getUniqueId(), null); plugin.saveConfig();
-                        p.sendMessage(ChatColor.GREEN+"2FA включена!");
-                        return true;
-                    case "disable":
-                        if (u.twoFASecret == null) { p.sendMessage(ChatColor.RED+"2FA не включена."); return true; }
-                        if (args.length < 3) { p.sendMessage(ChatColor.YELLOW+"/soldinregister 2fa disable <код>"); return true; }
-                        if (!com.soldin.register.util.TOTPUtil.verifyCode(u.twoFASecret, args[2], plugin.getConfig().getInt("twofa.totp_window", 1))) {
-                            p.sendMessage(ChatColor.RED+"Неверный код."); return true;
-                        }
-                        u.twoFASecret = null; plugin.storage().update(u);
-                        p.sendMessage(ChatColor.GREEN+"2FA выключена.");
-                        return true;
-                    case "unbind":
-                        if (args.length < 3) { p.sendMessage(ChatColor.YELLOW+"/soldinregister 2fa unbind <пароль>"); return true; }
-                        if (u.twoFASecret == null) { p.sendMessage(ChatColor.RED+"2FA не включена."); return true; }
-                        if (!PasswordUtil.verify(args[2], u)) { p.sendMessage(ChatColor.RED+"Пароль неверен."); return true; }
-                        u.twoFASecret = null; plugin.storage().update(u);
-                        p.sendMessage(ChatColor.GREEN+"2FA отвязана от аккаунта.");
-                        return true;
-                    case "reset":
-                        if (!p.hasPermission("soldinregister.admin")) { p.sendMessage(ChatColor.RED+"Нет прав."); return true; }
-                        if (args.length < 3) { p.sendMessage(ChatColor.YELLOW+"/soldinregister 2fa reset <ник>"); return true; }
-                        UserRecord tu = plugin.storage().getByName(args[2]);
-                        if (tu == null) { p.sendMessage(ChatColor.RED+"Игрок не найден."); return true; }
-                        tu.twoFASecret = null; plugin.storage().update(tu);
-                        p.sendMessage(ChatColor.GREEN+"2FA сброшена у "+tu.name);
-                        return true;
-                    default:
-                        p.sendMessage(ChatColor.YELLOW+"/soldinregister 2fa <tg|enable|confirm|disable|unbind|reset> ...");
-                        return true;
-                }
-case "2faurl":
-                if (!(sender instanceof Player)) { sender.sendMessage("Только игрок."); return true; }
-                Player pl = (Player) sender;
-                UserRecord ur = plugin.storage().getByUUID(pl.getUniqueId());
-                if (ur == null || ur.twoFASecret == null) { pl.sendMessage(ChatColor.RED+"2FA не включена."); return true; }
-                String issuer = plugin.getConfig().getString("twofa.issuer", "SoldinServer");
-                String otpauth = com.soldin.register.util.TOTPUtil.buildOtpAuthURL(issuer, pl.getName(), ur.twoFASecret);
-                pl.sendMessage(ChatColor.AQUA+otpauth);
                 return true;
         }
         return true;
