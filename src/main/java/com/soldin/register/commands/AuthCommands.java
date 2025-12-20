@@ -119,27 +119,27 @@ public class AuthCommands implements CommandExecutor {
         }
         switch (args[0].toLowerCase()) {
             case "reload":
-                if (!sender.hasPermission("soldinregister.admin")) { sender.sendMessage(ChatColor.RED+"Нет прав."); return true; }
+                if (!sender.hasPermission("soldinregister.admin")) { sender.sendMessage(ChatColor.RED+"♲ Нет прав."); return true; }
                 plugin.reloadConfig();
-                sender.sendMessage(ChatColor.GREEN+"Конфиг перезагружен.");
+                sender.sendMessage(ChatColor.GREEN+"♲ Конфиг перезагружен.");
                 return true;
             case "adminchangepass":
-                if (!sender.hasPermission("soldinregister.admin")) { sender.sendMessage(ChatColor.RED+"Нет прав."); return true; }
-                if (args.length < 3) { sender.sendMessage(ChatColor.YELLOW+"Исп: /soldinregister adminchangepass <ник> <новый>"); return true; }
+                if (!sender.hasPermission("soldinregister.admin")) { sender.sendMessage(ChatColor.RED+"♲ Нет прав."); return true; }
+                if (args.length < 3) { sender.sendMessage(ChatColor.YELLOW+"♲ /soldinregister adminchangepass <ник> <новый>"); return true; }
                 UserRecord ru = plugin.storage().getByName(args[1]);
                 if (ru == null) { sender.sendMessage(ChatColor.RED+"Игрок не найден."); return true; }
                 PasswordUtil.HashPack hp = PasswordUtil.hashPassword(args[2]);
                 ru.hash = hp.hash; ru.salt = hp.salt; ru.iterations = hp.iterations;
                 plugin.storage().update(ru);
-                sender.sendMessage(ChatColor.GREEN+"Пароль обновлён для "+ru.name);
+                sender.sendMessage(ChatColor.GREEN+"♲ Пароль обновлён для "+ru.name);
                 return true;
             case "admindelete":
-                if (!sender.hasPermission("soldinregister.admin")) { sender.sendMessage(ChatColor.RED+"Нет прав."); return true; }
-                if (args.length < 2) { sender.sendMessage(ChatColor.YELLOW+"Исп: /soldinregister admindelete <ник>"); return true; }
+                if (!sender.hasPermission("soldinregister.admin")) { sender.sendMessage(ChatColor.RED+"♲ Нет прав."); return true; }
+                if (args.length < 2) { sender.sendMessage(ChatColor.YELLOW+"♲ /soldinregister admindelete <ник>"); return true; }
                 UserRecord du = plugin.storage().getByName(args[1]);
-                if (du == null) { sender.sendMessage(ChatColor.RED+"Игрок не найден."); return true; }
+                if (du == null) { sender.sendMessage(ChatColor.RED+"♲ Игрок не найден."); return true; }
                 plugin.storage().delete(du.uuid);
-                sender.sendMessage(ChatColor.GREEN+"Аккаунт удалён: "+du.name);
+                sender.sendMessage(ChatColor.GREEN+"♲ Аккаунт удалён: "+du.name);
                 return true;
         }
         return true;
