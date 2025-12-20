@@ -41,7 +41,6 @@
     <!-- Dependencies -->
     <!-- ==================== -->
     <dependencies>
-
         <!-- Spigot API (1.16.5 → latest compatible) -->
         <dependency>
             <groupId>org.spigotmc</groupId>
@@ -64,13 +63,12 @@
             <version>7.7.0</version>
         </dependency>
 
-        <!-- Optional: JSON (если используешь) -->
+        <!-- Optional: JSON -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.10.1</version>
         </dependency>
-
     </dependencies>
 
     <!-- ==================== -->
@@ -78,7 +76,6 @@
     <!-- ==================== -->
     <build>
         <plugins>
-
             <!-- Maven Compiler -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -88,6 +85,27 @@
                     <source>17</source>
                     <target>17</target>
                 </configuration>
+            </plugin>
+
+            <!-- Maven Shade Plugin для fat-jar -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <relocations>
+                                <!-- Пример: можно зашейдить зависимости чтобы не конфликтовали -->
+                            </relocations>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
